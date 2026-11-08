@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en" data-features="corners,lineart">
+<html lang="en" data-features="corners,lineart,view">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d0f0e">
 <title>Whiteboard Tracer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0f0e'/%3E%3Cpath d='M7 22 L14 9 L19 17 L25 11' fill='none' stroke='%23ff5a3c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* Layout: full-bleed camera, overlay placed by one homography, control bar at the bottom (right side in landscape). */
 :root{
@@ -37,7 +38,8 @@ input[type=number]{font:500 15px/1 var(--ui);color:var(--fg);background:var(--ch
   min-height:44px;width:84px;padding:0 10px;font-variant-numeric:tabular-nums}
 
 #stage{position:fixed;inset:0;touch-action:none;overflow:hidden;background:#000}
-#cam,#view{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#view{position:absolute;left:0;top:0}
 #ov,#miss{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;pointer-events:none;will-change:transform,opacity}
 #ov.peek,#miss.peek{visibility:hidden}
 
@@ -97,6 +99,10 @@ body.locked .mini{display:flex}
 #corner-bar span{flex:1;min-width:0}
 #corners-done{background:var(--accent);border-color:var(--accent);color:#1a0d09;padding:0 18px;pointer-events:auto}
 body.cornering .bar,body.cornering #toast{display:none}
+
+/* camera view: glare badge */
+#glare-badge{position:fixed;z-index:7;left:calc(12px + env(safe-area-inset-left,0px));top:calc(12px + env(safe-area-inset-top,0px));
+  font-size:13px;font-weight:600;border-radius:999px;padding:6px 12px;background:var(--warn);color:#2a2104;pointer-events:none}
 
 @media (orientation:landscape) and (max-height:520px){
   .bar{left:auto;top:0;width:300px;justify-content:flex-end;border-top:0;border-left:1px solid var(--line);overflow-y:auto;

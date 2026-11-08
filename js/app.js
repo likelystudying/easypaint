@@ -232,6 +232,53 @@ function bindPeek(btn) {
 }
 bindPeek($("#t-peek")); bindPeek($("#peek2"));
 
+/* ---------- camera frame processing (shared by features) ---------- */
+// A task is { maxSide, interval (ms), run(frame) }. Each video frame, due tasks get a
+// downscaled copy of the frame: { imageData, vw, vh, k } where frame px = video px * k.
+// A task that is still busy (async) is skipped rather than queued.
+const work = document.createElement("canvas");
+const wctx = work.getContext("2d", { willReadFrequently: true });
+const tasks = new Set();
+let looping = false;
+
+app.grabFrame = (maxSide = 640) => {
+  const vw = cam.videoWidth, vh = cam.videoHeight;
+  if (!vw || !vh || cam.readyState < 2) return null;
+  const k = Math.min(1, maxSide / Math.max(vw, vh));
+  const w = Math.round(vw * k), h = Math.round(vh * k);
+  if (work.width !== w) work.width = w;
+  if (work.height !== h) work.height = h;
+  wctx.drawImage(cam, 0, 0, w, h);
+  return { imageData: wctx.getImageData(0, 0, w, h), vw, vh, k };
+};
+
+function scheduleTick() {
+  if (typeof cam.requestVideoFrameCallback === "function") cam.requestVideoFrameCallback(tick);
+  else requestAnimationFrame(tick);
+}
+function tick() {
+  if (!tasks.size || !app.started) { looping = false; return; }
+  const now = performance.now();
+  const cache = new Map();
+  for (const t of tasks) {
+    if (t.busy || now - t.last < (t.interval || 0)) continue;
+    const key = t.maxSide || 640;
+    if (!cache.has(key)) cache.set(key, app.grabFrame(key));
+    const f = cache.get(key);
+    if (!f) continue;
+    t.last = now; t.busy = true;
+    Promise.resolve().then(() => t.run(f)).catch(e => console.error("frame task failed", e)).finally(() => { t.busy = false; });
+  }
+  scheduleTick();
+}
+function ensureLoop() {
+  if (looping || !app.started || !tasks.size) return;
+  looping = true;
+  scheduleTick();
+}
+app.addFrameTask = (t) => { t.last = -Infinity; t.busy = false; tasks.add(t); ensureLoop(); return () => tasks.delete(t); };
+app.events.addEventListener("started", ensureLoop);
+
 /* ---------- camera ---------- */
 app.startCam = async () => {
   if (!window.isSecureContext) throw { name: "Insecure" };

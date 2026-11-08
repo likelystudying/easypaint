@@ -31,6 +31,16 @@ test("a full session is restored after reload", async ({ page }) => {
   nearPts(await corners(page), placed, 1e-6);
 });
 
+test("fixture calibration: the browser sees the board at the grey level the generator wrote", async ({ page }) => {
+  await openApp(page);
+  await startCamera(page);
+  const v = await page.evaluate(() => {
+    const d = window.__tracer.grabFrame(640).imageData.data;
+    const i = (240 * 640 + 320) * 4; return [d[i], d[i + 1], d[i + 2]];
+  });
+  v.forEach(c => expect(Math.abs(c - 236), `channel ${c}`).toBeLessThanOrEqual(8));
+});
+
 for (const vp of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
   test(`controls fit without sideways scrolling at ${vp.width}x${vp.height}`, async ({ page }) => {
     await page.setViewportSize(vp);

@@ -87,10 +87,11 @@ function renderFrame(cv, board, pose, scene) {
       if (r < 1.6) f[y * FW + x] = r < 1 ? 255 : Math.max(f[y * FW + x], Math.round(255 - (r - 1) * 200));
     }
   }
-  const rgb = new cv.Mat(); cv.cvtColor(frame, rgb, cv.COLOR_GRAY2RGB);
-  const yuv = new cv.Mat(); cv.cvtColor(rgb, yuv, cv.COLOR_RGB2YUV_I420);
-  const out = Buffer.from(yuv.data);
-  frame.delete(); rgb.delete(); yuv.delete();
+  // Grey frames: write I420 directly. Chrome decodes Y as limited range (16-235),
+  // so map grey 0-255 into that range; chroma is neutral (128).
+  const out = Buffer.alloc(FW * FH * 3 / 2, 128);
+  for (let i = 0; i < FW * FH; i++) out[i] = 16 + Math.round(f[i] * 219 / 255);
+  frame.delete();
   return out;
 }
 

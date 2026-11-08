@@ -9,6 +9,7 @@ export const DEFAULTS = Object.freeze({
   color: "red",     // red | blue | green
   style: "lines",   // lines | edges | sketch | photo
   detail: 5,        // line-art detail 1-10 (edges and sketch styles)
+  view: "normal",   // camera view: normal | boost (contrast-boosted)
   locked: false,
 });
 
