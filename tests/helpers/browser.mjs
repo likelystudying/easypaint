@@ -50,6 +50,7 @@ export async function drag(page, from, to, steps = 5) {
 export async function overlaySample(page) {
   return page.evaluate(async () => {
     const ov = document.querySelector("#ov");
+    for (let i = 0; i < 100 && !(ov.complete && ov.naturalWidth > 0); i++) await new Promise(r => setTimeout(r, 20));
     await ov.decode().catch(() => {});
     const c = document.createElement("canvas"); c.width = ov.naturalWidth; c.height = ov.naturalHeight;
     const g = c.getContext("2d"); g.drawImage(ov, 0, 0);
@@ -61,6 +62,18 @@ export async function overlaySample(page) {
     }
     return { first, opaqueFraction: opaque / (d.length / 4), hasTransparent: !!firstTransparent, w: c.width, h: c.height };
   });
+}
+
+// Drag corner handle i (feature: corners) so that image corner i lands on `to` (screen px).
+export async function dragHandle(page, i, to, steps = 6) {
+  const q = await corners(page);
+  const box = await page.locator(`#h${i}`).boundingBox();
+  const start = [box.x + box.width / 2, box.y + box.height / 2];
+  const end = [start[0] + to[0] - q[i][0], start[1] + to[1] - q[i][1]];
+  await page.mouse.move(start[0], start[1]);
+  await page.mouse.down();
+  await page.mouse.move(end[0], end[1], { steps });
+  await page.mouse.up();
 }
 
 export const near = (a, b, tol) => expect(Math.abs(a - b), `expected ${b} ± ${tol}, got ${a}`).toBeLessThanOrEqual(tol);

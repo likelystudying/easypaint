@@ -39,6 +39,36 @@ test("two-finger rotation beyond the snap zone is kept", () => {
   near(G.angleOf(H, IW, IH), 20, 1e-6);
 });
 
+const twist = (deg, cx = 150, cy = 100, r = 50) => {
+  const a = deg * Math.PI / 180;
+  return [[cx - r * Math.cos(a), cy - r * Math.sin(a)], [cx + r * Math.cos(a), cy + r * Math.sin(a)]];
+};
+
+test("a pure pinch keeps an existing tilt (no snapping to level)", () => {
+  const tilted = G.rotateAboutCentre(start, IW, IH, -1.2);
+  const H = gestureH(tilted, [[100, 100], [200, 100]], [[80, 100], [220, 100]], IW, IH, W, {});
+  near(G.angleOf(H, IW, IH), -1.2, 1e-6);
+});
+
+test("a small accidental twist during a pinch is ignored", () => {
+  const H = gestureH(G.rotateAboutCentre(start, IW, IH, 10), twist(0), twist(1.5), IW, IH, W, {});
+  near(G.angleOf(H, IW, IH), 10, 1e-6);
+});
+
+test("once unlocked, rotation follows the fingers and still snaps near level", () => {
+  const g = {};
+  let H = gestureH(start, twist(0), twist(10), IW, IH, W, g);
+  assert.equal(g.rotUnlocked, true);
+  near(G.angleOf(H, IW, IH), 10, 1e-6);
+  H = gestureH(start, twist(0), twist(1), IW, IH, W, g);   // back towards level in the same gesture
+  near(G.angleOf(H, IW, IH), 0, 1e-6);
+});
+
+test("pairRotationDeg wraps to the short way round", () => {
+  near(G.pairRotationDeg([0, 0], [1, 0], [0, 0], [Math.cos(3.1), Math.sin(3.1)]), 3.1 * 180 / Math.PI, 1e-9);
+  near(G.pairRotationDeg([0, 0], [-1, 0.01], [0, 0], [-1, -0.01]), 1.1459, 1e-3);
+});
+
 test("pinching smaller than the minimum width is rejected", () => {
   const H = gestureH(start, [[0, 0], [100, 0]], [[0, 0], [10, 0]], IW, IH, W);
   assert.equal(H, null);

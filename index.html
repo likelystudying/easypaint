@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-features="">
+<html lang="en" data-features="corners">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -82,6 +82,21 @@ body.locked .mini{display:flex}
 #start img{width:100%;border-radius:12px;background:#fff;padding:10px}
 #go{min-height:52px;font-size:16px;background:var(--accent);border-color:var(--accent);color:#1a0d09}
 #err{color:#ffb4a3}
+
+/* corner warp */
+#handles{position:fixed;inset:0;z-index:6;pointer-events:none}
+#quad{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#quad polygon{fill:none;stroke:#fff;stroke-width:1.5;stroke-dasharray:6 5;filter:drop-shadow(0 0 1px #000)}
+.hdl{position:absolute;left:0;top:0;width:44px;height:44px;min-height:0;padding:0;border-radius:50%;border:2px solid #fff;
+  background:rgba(255,90,60,.28);pointer-events:auto;touch-action:none;box-shadow:0 0 0 1px rgba(0,0,0,.55)}
+.hdl::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff}
+.hdl.bad{border-color:var(--warn);background:rgba(255,204,77,.35)}
+#corner-bar{position:absolute;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));
+  width:min(560px,calc(100% - 24px));display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--line);pointer-events:none;font-size:14px}
+#corner-bar span{flex:1;min-width:0}
+#corners-done{background:var(--accent);border-color:var(--accent);color:#1a0d09;padding:0 18px;pointer-events:auto}
+body.cornering .bar,body.cornering #toast{display:none}
 
 @media (orientation:landscape) and (max-height:520px){
   .bar{left:auto;top:0;width:300px;justify-content:flex-end;border-top:0;border-left:1px solid var(--line);overflow-y:auto;

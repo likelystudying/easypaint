@@ -97,13 +97,22 @@ export function homography(src, dst) {
   return H;
 }
 
+// Rotation (degrees, -180..180) from segment a0-b0 to segment a1-b1.
+export function pairRotationDeg(a0, b0, a1, b1) {
+  let d = (Math.atan2(b1[1] - a1[1], b1[0] - a1[0]) - Math.atan2(b0[1] - a0[1], b0[0] - a0[0])) * 180 / Math.PI;
+  while (d > 180) d -= 360;
+  while (d < -180) d += 360;
+  return d;
+}
+
 // Similarity (move + uniform scale + rotation) that carries pair (a0, b0) onto (a1, b1).
-export function similarityFromPairs(a0, b0, a1, b1) {
+// With withRotation=false the rotation is left out (scale and move about the midpoint only).
+export function similarityFromPairs(a0, b0, a1, b1, withRotation = true) {
   const d0 = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]);
   const d1 = Math.hypot(b1[0] - a1[0], b1[1] - a1[1]);
   if (d0 < 1e-6) return translate((a1[0] + b1[0]) / 2 - (a0[0] + b0[0]) / 2, (a1[1] + b1[1]) / 2 - (a0[1] + b0[1]) / 2);
   const k = d1 / d0;
-  const da = Math.atan2(b1[1] - a1[1], b1[0] - a1[0]) - Math.atan2(b0[1] - a0[1], b0[0] - a0[0]);
+  const da = withRotation ? pairRotationDeg(a0, b0, a1, b1) * Math.PI / 180 : 0;
   const m0 = [(a0[0] + b0[0]) / 2, (a0[1] + b0[1]) / 2];
   const m1 = [(a1[0] + b1[0]) / 2, (a1[1] + b1[1]) / 2];
   return mul(translate(m1[0], m1[1]), mul(rotate(da), mul(scale(k), translate(-m0[0], -m0[1]))));

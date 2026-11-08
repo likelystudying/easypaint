@@ -101,8 +101,12 @@ app.processImage = async () => {
   const blob = await new Promise(r => c.toBlob(r, "image/png"));
   if (token !== processToken || !blob) return;
   const url = URL.createObjectURL(blob);
+  // Decode off-screen first so the visible overlay swaps without a blank frame.
+  const pre = new Image(); pre.src = url;
+  try { await pre.decode(); } catch (e) { /* fall through; the swap still works */ }
+  if (token !== processToken) { URL.revokeObjectURL(url); return; }
   ov.src = url;
-  try { await ov.decode(); } catch (e) { /* decode can reject for detached images; src is set anyway */ }
+  try { await ov.decode(); } catch (e) { /* already decoded above */ }
   if (app._ovURL) URL.revokeObjectURL(app._ovURL);
   app._ovURL = url;
   const sizeChanged = src.width !== app.imgW || src.height !== app.imgH;
@@ -140,7 +144,7 @@ const pts = new Map();
 let gStart = null;
 function rebase() {
   const ids = [...pts.keys()].slice(0, 2);
-  gStart = ids.length ? { H: app.displayH(), ids, p0: ids.map(i => [pts.get(i).x, pts.get(i).y]) } : null;
+  gStart = ids.length ? { H: app.displayH(), ids, p0: ids.map(i => [pts.get(i).x, pts.get(i).y]), g: {} } : null;
 }
 stage.addEventListener("pointerdown", e => {
   if (!app.started || app.st.locked || app.gesturesBlocked || !app.st.H) return;
@@ -154,7 +158,7 @@ stage.addEventListener("pointermove", e => {
   if (!gStart) return;
   const cur = gStart.ids.map(i => pts.get(i));
   if (cur.some(p => !p)) { rebase(); return; }
-  const H = gestureH(gStart.H, gStart.p0, cur.map(p => [p.x, p.y]), app.imgW, app.imgH, stage.clientWidth);
+  const H = gestureH(gStart.H, gStart.p0, cur.map(p => [p.x, p.y]), app.imgW, app.imgH, stage.clientWidth, gStart.g);
   if (H) { app.setDisplayH(H); app.render(); }
 });
 function endPointer(e) {
