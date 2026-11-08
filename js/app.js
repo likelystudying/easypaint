@@ -354,6 +354,11 @@ window.__tracer = app;
 
 // Features register themselves before boot runs.
 const featureList = (document.documentElement.dataset.features || "").split(",").filter(Boolean);
-Promise.all(featureList.map(n => import(`./features/${n}.js`).then(m => app.register(m.default))))
-  .catch(e => console.error("feature load failed", e))
+// Load in parallel, but register (and so initialise) in the listed order: later features may
+// depend on earlier ones (e.g. scale uses markers).
+Promise.allSettled(featureList.map(n => import(`./features/${n}.js`)))
+  .then(results => results.forEach((r, i) => {
+    if (r.status === "fulfilled") app.register(r.value.default);
+    else console.error("feature load failed", featureList[i], r.reason);
+  }))
   .finally(boot);

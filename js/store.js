@@ -11,6 +11,8 @@ export const DEFAULTS = Object.freeze({
   detail: 5,        // line-art detail 1-10 (edges and sketch styles)
   view: "normal",   // camera view: normal | boost (contrast-boosted)
   anchor: null,     // marker anchor: { ref: { id: [[x,y] x4] } } in screen px, or null
+  markerCm: 6,      // printed marker black-square side, cm
+  widthCm: 0,       // last real width set for the drawing, cm (0 = never)
   locked: false,
 });
 
@@ -22,7 +24,11 @@ export function loadState(storage) {
     if (raw) {
       const j = JSON.parse(raw);
       if (j && typeof j === "object") {
-        for (const k of Object.keys(DEFAULTS)) if (k in (j.st || {})) st[k] = j.st[k];
+        for (const k of Object.keys(DEFAULTS)) {
+          if (!(k in (j.st || {}))) continue;
+          // Primitive settings must keep their type; null defaults (H, anchor) are validated below.
+          if (DEFAULTS[k] === null || typeof j.st[k] === typeof DEFAULTS[k]) st[k] = j.st[k];
+        }
         if (typeof j.img === "string") img = j.img;
       }
     } else {
@@ -39,6 +45,8 @@ export function loadState(storage) {
     }
   } catch (e) { /* storage unavailable or corrupt: use defaults */ }
   if (!validAnchor(st.anchor)) st.anchor = null;
+  if (!(st.markerCm > 0) || !Number.isFinite(st.markerCm)) st.markerCm = DEFAULTS.markerCm;
+  if (!(st.op >= 10 && st.op <= 100)) st.op = DEFAULTS.op;
   if (!Array.isArray(st.H) || st.H.length !== 9 || st.H.some(v => typeof v !== "number" || !Number.isFinite(v))) st.H = null;
   return { st, img };
 }

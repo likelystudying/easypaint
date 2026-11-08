@@ -55,6 +55,8 @@ function normTransform(pts) {
   return [s, 0, -s * mx, 0, s, -s * my, 0, 0, 1];
 }
 
+export function solveLinear(A, b) { return solve(A, b); }
+
 function solve(A, b) {
   const n = b.length;
   const M = A.map((row, i) => [...row, b[i]]);

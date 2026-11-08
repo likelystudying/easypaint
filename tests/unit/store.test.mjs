@@ -67,3 +67,13 @@ test("when the image is too big for storage, settings are still saved", () => {
   assert.equal(back.st.op, 22);
   assert.equal(back.img, null);
 });
+
+test("settings with the wrong type or an impossible value fall back to defaults", () => {
+  const bad = { st: { op: "70", markerCm: -3, locked: "yes", color: 5, widthCm: 50 } };
+  const { st } = loadState(fakeStorage({ [KEY]: JSON.stringify(bad) }));
+  assert.equal(st.op, DEFAULTS.op);
+  assert.equal(st.markerCm, DEFAULTS.markerCm);
+  assert.equal(st.locked, false);
+  assert.equal(st.color, DEFAULTS.color);
+  assert.equal(st.widthCm, 50);
+});

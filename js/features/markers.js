@@ -104,6 +104,9 @@ function init(app) {
 
   const st = app.markers = { seen: 0, ids: [], screen: {}, ref: null, anchored: false, lost: false, frames: 0, lastT: null };
   let cv = null, detector = null, stop = null, smoothed = {};
+  const wants = new Set(); // other features that need detection running (e.g. real-size readout)
+  st.want = (reason, on) => { if (on) wants.add(reason); else wants.delete(reason); ensureRunning(); };
+  const needed = () => app.started && (st.anchored || !panel.hidden || wants.size > 0);
 
   function anchorFromState() {
     const a = app.st.anchor;
@@ -138,18 +141,18 @@ function init(app) {
       if (T) { app.track = T; st.lastT = T; app.render(); }
     }
     updateUI();
+    app.events.dispatchEvent(new Event("markers"));
   }
 
   async function ensureRunning() {
-    const want = app.started && (st.anchored || !panel.hidden);
-    if (!want) { if (stop) { stop(); stop = null; } return; }
+    if (!needed()) { if (stop) { stop(); stop = null; } return; }
     if (stop) return;
     try {
       if (!globalThis.cv || !globalThis.cv.Mat) app.toast("Loading the vision engine (about 11 MB, first time only)…", 6000);
       cv = await loadCV();
       detector = detector || createDetector(cv);
     } catch (e) { app.toast(e.message, 6000); return; }
-    if (stop || !(app.started && (st.anchored || !panel.hidden))) return;
+    if (stop || !needed()) return;
     stop = app.addFrameTask({ maxSide: 960, interval: 0, run: onFrame });
   }
 

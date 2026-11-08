@@ -46,21 +46,32 @@ for (const vp of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
     await page.setViewportSize(vp);
     await openApp(page);
     await startCamera(page);
-    for (const tab of ["#t-style", "#t-align"]) {
+    const tabs = await page.$$eval("#tabs [data-panel]", els => els.map(e => "#" + e.id));
+    for (const tab of tabs) {
       await page.click(tab);
-      const overflow = await page.evaluate(() => {
+      const r = await page.evaluate(() => {
         const bar = document.querySelector("#bar");
-        const over = [...bar.querySelectorAll("button,label,input")].filter(el => {
-          if (!el.offsetParent) return false;
-          const r = el.getBoundingClientRect();
-          return r.left < -0.5 || r.right > innerWidth + 0.5;
-        }).map(el => el.id || el.textContent.trim());
-        return { over, scrollX: document.documentElement.scrollWidth - innerWidth };
+        const name = el => el.id || el.textContent.trim().slice(0, 20);
+        const items = [...bar.querySelectorAll("button,label,input,a,.lbl,.note,.unit,.val,.pill")].filter(el => el.offsetParent && el.getClientRects().length);
+        const over = items.filter(el => { const r = el.getBoundingClientRect(); return r.left < -0.5 || r.right > innerWidth + 0.5; }).map(name);
+        // Text that does not fit its box (clipped or spilling onto neighbours)
+        const clipped = items.filter(el => !["INPUT"].includes(el.tagName) && el.scrollWidth > el.clientWidth + 1).map(name);
+        // Sibling controls that overlap each other
+        const overlaps = [];
+        for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+          const a = items[i], b = items[j];
+          if (a.contains(b) || b.contains(a)) continue;
+          const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
+          const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), h = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+          if (w > 1 && h > 1) overlaps.push(name(a) + " / " + name(b));
+        }
+        return { over, clipped, overlaps, scrollX: document.documentElement.scrollWidth - innerWidth };
       });
-      expect(overflow.over, `controls outside the screen with ${tab} open`).toEqual([]);
-      expect(overflow.scrollX).toBeLessThanOrEqual(0);
+      expect(r.over, `controls outside the screen with ${tab} open`).toEqual([]);
+      expect(r.clipped, `text that does not fit with ${tab} open`).toEqual([]);
+      expect(r.overlaps, `overlapping controls with ${tab} open`).toEqual([]);
+      expect(r.scrollX).toBeLessThanOrEqual(0);
     }
-    const tabs = await page.locator("#tabs > *").all();
-    for (const t of tabs) await expect(t).toBeInViewport();
+    for (const t of await page.locator("#tabs > *").all()) await expect(t).toBeInViewport();
   });
 }
