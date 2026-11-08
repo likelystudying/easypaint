@@ -49,6 +49,17 @@ test("v1 data migrates image, opacity and photo mode", () => {
   assert.equal(img, "data:x");
 });
 
+test("a marker anchor round-trips, and a malformed one is dropped", () => {
+  const anchor = { ref: { 0: [[1, 2], [3, 4], [5, 6], [7, 8]], 2: [[9, 9], [10, 9], [10, 10], [9, 10]] } };
+  const s = fakeStorage();
+  saveState(s, { ...DEFAULTS, anchor }, null);
+  assert.deepEqual(loadState(s).st.anchor, anchor);
+  for (const bad of [{ ref: { 0: [[1, 2]] } }, { ref: {} }, "x", { ref: { 0: [[1, 2], [3, 4], [5, 6], [7, "a"]] } }]) {
+    const t = fakeStorage({ [KEY]: JSON.stringify({ st: { anchor: bad } }) });
+    assert.equal(loadState(t).st.anchor, null, JSON.stringify(bad));
+  }
+});
+
 test("when the image is too big for storage, settings are still saved", () => {
   const s = fakeStorage({}, 500);
   assert.equal(saveState(s, { ...DEFAULTS, op: 22 }, "x".repeat(1000)), false);

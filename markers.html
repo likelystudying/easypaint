@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tracer Markers</title>
+<style>
+/* Print sheet: fixed light look so it prints the same everywhere. 2x2 grid of 8 cm tiles (6 cm black square). */
+:root{--ink:#111;--muted:#555;--line:#c9c9c9;--bg:#fff;--ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--ui)}
+main{max-width:720px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
+h1{font-size:24px;margin:0 0 8px}
+ol{margin:0 0 20px;padding-left:20px;color:var(--muted)}
+ol li{margin:4px 0}
+.grid{display:grid;grid-template-columns:repeat(2,8cm);gap:1cm;justify-content:center}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+figure svg{display:block;outline:1px dashed var(--line);outline-offset:0}
+figcaption{font-size:12px;color:var(--muted);text-align:center}
+@media (max-width:760px){.grid{grid-template-columns:1fr;justify-items:center}}
+@media print{
+  @page{margin:12mm}
+  main{padding:0;max-width:none}
+  .noprint{display:none}
+  .grid{grid-template-columns:repeat(2,8cm)}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="noprint">
+    <h1>Tracer markers</h1>
+    <ol>
+      <li>Print this page at <b>100% / Actual size</b> (not "Fit to page").</li>
+      <li>Measure one black square. It should be 6&nbsp;cm; if not, enter what you measured in Track › Marker size.</li>
+      <li>Cut along the dashed lines and tape the markers near the corners of where you will draw.</li>
+      <li>Keep at least two markers in the camera's view while you draw.</li>
+    </ol>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<script type="module">
+import { markerSVG, MARKER_IDS } from "./js/marker-bits.js";
+const places = ["top-left", "top-right", "bottom-right", "bottom-left"];
+document.getElementById("grid").innerHTML = MARKER_IDS.map(id =>
+  `<figure>${markerSVG(id, "8cm")}<figcaption>Marker ${id} · suggested ${places[id]}</figcaption></figure>`).join("");
+</script>
+</body>
+</html>

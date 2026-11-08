@@ -10,6 +10,7 @@ export const DEFAULTS = Object.freeze({
   style: "lines",   // lines | edges | sketch | photo
   detail: 5,        // line-art detail 1-10 (edges and sketch styles)
   view: "normal",   // camera view: normal | boost (contrast-boosted)
+  anchor: null,     // marker anchor: { ref: { id: [[x,y] x4] } } in screen px, or null
   locked: false,
 });
 
@@ -37,6 +38,7 @@ export function loadState(storage) {
       }
     }
   } catch (e) { /* storage unavailable or corrupt: use defaults */ }
+  if (!validAnchor(st.anchor)) st.anchor = null;
   if (!Array.isArray(st.H) || st.H.length !== 9 || st.H.some(v => typeof v !== "number" || !Number.isFinite(v))) st.H = null;
   return { st, img };
 }
@@ -50,4 +52,12 @@ export function saveState(storage, st, img) {
     try { storage.setItem(KEY, JSON.stringify({ st: data, img: null })); } catch (_) { /* give up */ }
     return false;
   }
+}
+
+function validAnchor(a) {
+  if (a === null) return true;
+  if (!a || typeof a !== "object" || !a.ref || typeof a.ref !== "object") return false;
+  const ids = Object.keys(a.ref);
+  return ids.length >= 1 && ids.every(id => Array.isArray(a.ref[id]) && a.ref[id].length === 4 &&
+    a.ref[id].every(p => Array.isArray(p) && p.length === 2 && p.every(Number.isFinite)));
 }
