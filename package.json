@@ -1,0 +1,17 @@
+{
+  "name": "easypaint",
+  "private": true,
+  "type": "module",
+  "description": "Whiteboard Tracer: overlay an image on the live phone camera to trace it.",
+  "scripts": {
+    "serve": "node tests/server.mjs",
+    "fixtures": "node tests/fixtures/generate.mjs",
+    "test:unit": "node --test --test-reporter=spec \"tests/unit/**/*.test.mjs\"",
+    "test:functional": "playwright test --project=functional",
+    "test:integration": "playwright test --project=integration",
+    "test": "npm run fixtures && npm run test:unit && npm run test:functional && npm run test:integration"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
