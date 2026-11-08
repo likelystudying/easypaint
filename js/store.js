@@ -7,7 +7,8 @@ export const DEFAULTS = Object.freeze({
   imgW: 0, imgH: 0, // processed image size that H refers to
   op: 70,           // overlay opacity %
   color: "red",     // red | blue | green
-  style: "lines",   // lines | photo (more styles added by features)
+  style: "lines",   // lines | edges | sketch | photo
+  detail: 5,        // line-art detail 1-10 (edges and sketch styles)
   locked: false,
 });
 

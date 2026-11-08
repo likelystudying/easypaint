@@ -64,6 +64,28 @@ export async function overlaySample(page) {
   });
 }
 
+// Overlay alpha at image-space points, plus overall ink fraction (alpha > 128).
+export async function overlayAlpha(page, points = []) {
+  return page.evaluate(async (points) => {
+    const ov = document.querySelector("#ov");
+    for (let i = 0; i < 100 && !(ov.complete && ov.naturalWidth > 0); i++) await new Promise(r => setTimeout(r, 20));
+    await ov.decode().catch(() => {});
+    const c = document.createElement("canvas"); c.width = ov.naturalWidth; c.height = ov.naturalHeight;
+    const g = c.getContext("2d"); g.drawImage(ov, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 128) n++;
+    const a = (x, y) => d[(y * c.width + x) * 4 + 3];
+    const near = (x, y, r = 2) => { let m = 0; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) m = Math.max(m, a(x + dx, y + dy) || 0); return m; };
+    return { at: points.map(([x, y]) => a(x, y)), near: points.map(([x, y]) => near(x, y)), fraction: n / (d.length / 4) };
+  }, points);
+}
+
+// Wait until the overlay has been rebuilt in the given style.
+export async function waitForStyle(page, style) {
+  await page.waitForFunction(s => window.__tracer.st.style === s && document.querySelector(`#style-seg [data-s="${s}"]`).getAttribute("aria-pressed") === "true", style);
+  await page.waitForFunction(() => { const ov = document.querySelector("#ov"); return ov.complete && ov.naturalWidth > 0; });
+}
+
 // Drag corner handle i (feature: corners) so that image corner i lands on `to` (screen px).
 export async function dragHandle(page, i, to, steps = 6) {
   const q = await corners(page);

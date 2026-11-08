@@ -90,7 +90,8 @@ app.processImage = async () => {
     try { ink = await style.ink(src, app.st); }
     catch (e) {
       if (token !== processToken) return;
-      app.toast(e.message || "That style could not be applied.", 5000);
+      app.toast((e && e.message) || "That style could not be applied.", 6000);
+      app.st.style = "lines"; app.syncUI(); app.save();
       ink = inkFromLuminance(src.data, src.width, src.height);
     }
     if (token !== processToken) return;
